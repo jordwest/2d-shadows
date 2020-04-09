@@ -60,19 +60,9 @@ namespace State {
         state.canvas
       );
 
-      const angleToLight = Vec2.angleTo(LIGHT_POS, mousePos);
-
-      const offset = Vec2.scalarMult(
-        Angle.toUnitVector(Angle.add(angleToLight, (Math.PI / 2) as Angle.T)),
-        0.1
-      ) as GlCoords.T;
-
-      const startPos = Vec2.add<GlCoords.T>(mousePos, offset);
-      const endPos = Vec2.add<GlCoords.T>(mousePos, Vec2.invert(offset));
-
       const occluder = {
-        a: startPos,
-        b: endPos,
+        origin: mousePos,
+        radius: 0.1,
       };
 
       ShadowProgram.recalculateOcclusions(state.shadow, ORIGIN, [occluder]);

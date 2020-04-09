@@ -23,6 +23,10 @@ export namespace Vec2 {
     return { x: a.x + b.x, y: a.y + b.y } as C;
   }
 
+  export function magnitude(v: T): number {
+    return Math.hypot(v.x, v.y);
+  }
+
   export function angleTo(origin: T, target: T): Angle.T {
     return Math.atan2(target.y - origin.y, target.x - origin.x) as Angle.T;
   }

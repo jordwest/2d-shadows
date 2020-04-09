@@ -1,7 +1,6 @@
 import * as twgl from "twgl.js";
 import vertShader from "./shaders/shadow.vert";
 import fragShader from "./shaders/shadow.frag";
-import { SimpleOccluder } from "./simple_occluder";
 import { Vec2 } from "./vec2";
 import { Debug } from "./debug";
 import { SilhouetteOccluder } from "./silhouette_occluder";
@@ -26,10 +25,17 @@ export namespace ShadowProgram {
         numComponents: 2,
         data: new Float32Array(0),
       },
+      dist: {
+        numComponents: 2,
+        data: new Float32Array(0),
+      },
     };
 
     const silhouetteTexture = twgl.createTexture(gl, {
       src: silhouetteTexturePng,
+      wrap: gl.CLAMP_TO_EDGE,
+      min: gl.NEAREST,
+      mag: gl.NEAREST,
     });
 
     return {
@@ -43,7 +49,7 @@ export namespace ShadowProgram {
   export function recalculateOcclusions(
     state: T,
     lightPosition: Vec2.T,
-    occluders: SimpleOccluder.T[]
+    occluders: SilhouetteOccluder.T[]
   ) {
     const positions = new Float32Cursor(
       new Float32Array(occluders.length * 12)
@@ -51,10 +57,13 @@ export namespace ShadowProgram {
 
     const info = new Float32Cursor(new Float32Array(occluders.length * 12));
 
+    const dist = new Float32Cursor(new Float32Array(occluders.length * 12));
+
     for (const occluder of occluders) {
       SilhouetteOccluder.occlusionTriangles(
         positions,
         info,
+        dist,
         occluder,
         lightPosition,
         5.0
@@ -69,6 +78,10 @@ export namespace ShadowProgram {
       info: {
         numComponents: 2,
         data: info.array,
+      },
+      dist: {
+        numComponents: 2,
+        data: dist.array,
       },
     };
     Debug.record("occlusion triangles size", positions.offset);
