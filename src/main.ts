@@ -1,11 +1,12 @@
 import * as twgl from "twgl.js";
 import { LightProgram } from "./light_program";
 import { ShadowProgram } from "./shadow_program";
-import { Vec2 } from "./vec2";
+import { Vec2, Angle } from "./vec2";
 import { ScreenCoords, GlCoords } from "./coordinates";
 import { Debug } from "./debug";
 
 const ORIGIN: Readonly<Vec2.T> = { x: 0.0, y: 0.0 };
+const LIGHT_POS = ORIGIN;
 
 namespace State {
   export type T = {
@@ -41,7 +42,7 @@ namespace State {
       light,
       shadow: ShadowProgram.init(gl),
       occlusionMap,
-      mode: "emission",
+      mode: "shadow",
     };
   }
 
@@ -54,27 +55,27 @@ namespace State {
       .addEventListener("click", () => (state.mode = "shadow"));
 
     state.canvas.addEventListener("mousemove", (e) => {
-      const mousePos = ScreenCoords.fromCanvasEvent(e);
+      const mousePos = GlCoords.fromScreenCoords(
+        ScreenCoords.fromCanvasEvent(e),
+        state.canvas
+      );
 
-      const startPos = Vec2.add<ScreenCoords.T>(mousePos, {
-        x: 50,
-        y: 10,
-      } as ScreenCoords.T);
+      const angleToLight = Vec2.angleTo(LIGHT_POS, mousePos);
 
-      const occluderB = {
-        a: { x: -0.3, y: -0.9 },
-        b: { x: -0.6, y: -0.5 },
-      };
+      const offset = Vec2.scalarMult(
+        Angle.toUnitVector(Angle.add(angleToLight, (Math.PI / 2) as Angle.T)),
+        0.1
+      ) as GlCoords.T;
+
+      const startPos = Vec2.add<GlCoords.T>(mousePos, offset);
+      const endPos = Vec2.add<GlCoords.T>(mousePos, Vec2.invert(offset));
 
       const occluder = {
-        a: GlCoords.fromScreenCoords(startPos, state.canvas),
-        b: GlCoords.fromScreenCoords(mousePos, state.canvas),
+        a: startPos,
+        b: endPos,
       };
 
-      ShadowProgram.recalculateOcclusions(state.shadow, ORIGIN, [
-        occluder,
-        occluderB,
-      ]);
+      ShadowProgram.recalculateOcclusions(state.shadow, ORIGIN, [occluder]);
     });
   }
 

@@ -1,5 +1,6 @@
 import { Vec2, Angle } from "./vec2";
 import { Float32Cursor } from "./cursor";
+import { Debug } from "./debug";
 
 export namespace SilhouetteOccluder {
   export type T = {
@@ -27,23 +28,27 @@ export namespace SilhouetteOccluder {
       Vec2.scalarMult(Angle.toUnitVector(thetaRayB), lightRadius)
     );
 
+    Debug.record("thetaRayA", thetaRayA);
+    Debug.record("thetaRayB", thetaRayB);
+
     // Tri 1
-    pos.vec2(occluder.a), info.push(0.0);
+    pos.vec2(occluder.a);
+    info.push2(thetaRayA, thetaRayB);
 
     pos.vec2(endpointA);
-    info.push(0.0);
+    info.push2(thetaRayA, thetaRayB);
 
     pos.vec2(occluder.b);
-    info.push(1.0);
+    info.push2(thetaRayA, thetaRayB);
 
     // Tri 2
     pos.vec2(occluder.b);
-    info.push(1.0);
+    info.push2(thetaRayA, thetaRayB);
 
     pos.vec2(endpointA);
-    info.push(0.0);
+    info.push2(thetaRayA, thetaRayB);
 
     pos.vec2(endpointB);
-    info.push(1.0);
+    info.push2(thetaRayA, thetaRayB);
   }
 }

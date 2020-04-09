@@ -23,7 +23,7 @@ export namespace ShadowProgram {
         data: new Float32Array(0),
       },
       info: {
-        numComponents: 1,
+        numComponents: 2,
         data: new Float32Array(0),
       },
     };
@@ -49,7 +49,7 @@ export namespace ShadowProgram {
       new Float32Array(occluders.length * 12)
     );
 
-    const info = new Float32Cursor(new Float32Array(occluders.length * 6));
+    const info = new Float32Cursor(new Float32Array(occluders.length * 12));
 
     for (const occluder of occluders) {
       SilhouetteOccluder.occlusionTriangles(
@@ -67,7 +67,7 @@ export namespace ShadowProgram {
         data: positions.array,
       },
       info: {
-        numComponents: 1,
+        numComponents: 2,
         data: info.array,
       },
     };
@@ -89,6 +89,7 @@ export namespace ShadowProgram {
 
     const uniforms = {
       silhouetteSampler: state.silhouetteTexture,
+      lightSourcePos: [0.0, 0.0],
     };
 
     twgl.setUniforms(programInfo, uniforms);
