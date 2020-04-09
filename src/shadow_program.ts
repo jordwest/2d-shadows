@@ -1,0 +1,100 @@
+import * as twgl from "twgl.js";
+import vertShader from "./shaders/shadow.vert";
+import fragShader from "./shaders/shadow.frag";
+import { SimpleOccluder } from "./simple_occluder";
+import { Vec2 } from "./vec2";
+import { Debug } from "./debug";
+import { SilhouetteOccluder } from "./silhouette_occluder";
+import silhouetteTexturePng from "../assets/baked_shadow.png";
+import { Float32Cursor } from "./cursor";
+
+export namespace ShadowProgram {
+  export type T = {
+    gl: WebGLRenderingContext;
+    programInfo: twgl.ProgramInfo;
+    bufferInfo: twgl.BufferInfo;
+    silhouetteTexture: WebGLTexture;
+  };
+
+  export function init(gl: WebGLRenderingContext): T {
+    const arrays = {
+      position: {
+        numComponents: 2,
+        data: new Float32Array(0),
+      },
+      info: {
+        numComponents: 1,
+        data: new Float32Array(0),
+      },
+    };
+
+    const silhouetteTexture = twgl.createTexture(gl, {
+      src: silhouetteTexturePng,
+    });
+
+    return {
+      gl,
+      silhouetteTexture,
+      programInfo: twgl.createProgramInfo(gl, [vertShader, fragShader]),
+      bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays),
+    };
+  }
+
+  export function recalculateOcclusions(
+    state: T,
+    lightPosition: Vec2.T,
+    occluders: SimpleOccluder.T[]
+  ) {
+    const positions = new Float32Cursor(
+      new Float32Array(occluders.length * 12)
+    );
+
+    const info = new Float32Cursor(new Float32Array(occluders.length * 6));
+
+    for (const occluder of occluders) {
+      SilhouetteOccluder.occlusionTriangles(
+        positions,
+        info,
+        occluder,
+        lightPosition,
+        5.0
+      );
+    }
+
+    const arrays = {
+      position: {
+        numComponents: 2,
+        data: positions.array,
+      },
+      info: {
+        numComponents: 1,
+        data: info.array,
+      },
+    };
+    Debug.record("occlusion triangles size", positions.offset);
+    Debug.record("occlusion info size", info.offset);
+    state.bufferInfo = twgl.createBufferInfoFromArrays(
+      state.gl,
+      arrays,
+      state.bufferInfo
+    );
+  }
+
+  export function render(state: T) {
+    const { gl, programInfo, bufferInfo } = state;
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    const uniforms = {
+      silhouetteSampler: state.silhouetteTexture,
+    };
+
+    twgl.setUniforms(programInfo, uniforms);
+
+    gl.useProgram(programInfo.program);
+    twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+    twgl.drawBufferInfo(gl, bufferInfo);
+  }
+}

@@ -1,6 +1,33 @@
 <html>
+  <head>
+<style>
+    .pad {
+      padding: 8px;
+    }
+
+    button {
+      border: 2px solid black;
+      background-color: #ddddaa;
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    button:hover {
+      background-color: #ffffaa;
+    }
+</style>
+  </head>
 	<body>
-		<canvas id="display"></canvas>
+    <div class="pad">
+      <button id="shadow">Shadow</button>
+      <button id="emission">Emission</button>
+    </div>
+    <div class="pad">
+		<canvas id="display" width="800" height="800"></canvas>
+    </div>
+
+    <div id="debug"></div>
+
 		<script src="src/main.ts"></script>
 	</body>
 </html>
