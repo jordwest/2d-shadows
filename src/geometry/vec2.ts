@@ -27,8 +27,12 @@ export namespace Vec2 {
     return Math.hypot(v.x, v.y);
   }
 
-  export function angleTo(origin: T, target: T): Angle.T {
-    return Math.atan2(target.y - origin.y, target.x - origin.x) as Angle.T;
+  export function angle(vec: T): Angle.T {
+    return Math.atan2(vec.y, vec.x) as Angle.T;
+  }
+
+  export function angleBetween(origin: T, target: T): Angle.T {
+    return angle(add(invert(origin), target));
   }
 
   export function invert<C extends T>(vec: T): C {

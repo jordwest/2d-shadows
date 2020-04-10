@@ -40,9 +40,9 @@ namespace State {
     light.occlusionTexture = occlusionMap.attachments[0];
 
     const occluders = [
-      { a: { x: -0.5, y: 0.4 }, b: { x: -0.2, y: 0.4 }, alpha: 1 },
+      { a: { x: -0.3, y: 0.4 }, b: { x: -0.2, y: 0.4 }, alpha: 1 },
       { a: { x: -0.2, y: 0.4 }, b: { x: 0.2, y: 0.4 }, alpha: 0.4 },
-      { a: { x: 0.2, y: 0.4 }, b: { x: 0.5, y: 0.4 }, alpha: 1 },
+      { a: { x: 0.2, y: 0.4 }, b: { x: 0.3, y: 0.4 }, alpha: 1 },
     ];
 
     return {
@@ -65,21 +65,38 @@ namespace State {
       .querySelector("button#shadow")
       ?.addEventListener("click", () => (state.mode = "shadow"));
 
-    /*
-    state.canvas.addEventListener("click", (e) => {
+    let drawingOccluder:
+      | undefined
+      | { start: Vec2.T; occluderRef: SimpleOccluder.T };
+    state.canvas.addEventListener("mousedown", (e) => {
       const mousePos = GlCoords.fromScreenCoords(
         ScreenCoords.fromCanvasEvent(e),
         state.canvas
       );
-
-      const occluder = {
-        origin: mousePos,
-        radius: Math.random() * 0.1 + 0.1,
+      let newOccluder = {
+        a: { ...mousePos },
+        b: { ...mousePos },
+        alpha: 0.6,
       };
-
+      drawingOccluder = {
+        start: { ...mousePos },
+        occluderRef: newOccluder,
+      };
+      state.occluders.push(newOccluder);
       Debug.record("occluder count", state.occluders.length);
     });
-    */
+    state.canvas.addEventListener("mousemove", (e) => {
+      if (drawingOccluder != null) {
+        const mousePos = GlCoords.fromScreenCoords(
+          ScreenCoords.fromCanvasEvent(e),
+          state.canvas
+        );
+        drawingOccluder.occluderRef.b = { ...mousePos };
+      }
+    });
+    state.canvas.addEventListener("mouseup", () => {
+      drawingOccluder = undefined;
+    });
 
     state.canvas.addEventListener("mousemove", (e) => {
       const mousePos = GlCoords.fromScreenCoords(
@@ -89,11 +106,11 @@ namespace State {
 
       state.lightPosition = mousePos;
 
-      ShadowProgram.recalculateOcclusions(
-        state.shadow,
-        state.lightPosition,
-        state.occluders
-      );
+      //ShadowProgram.recalculateOcclusions(
+      //  state.shadow,
+      //  state.lightPosition,
+      //  state.occluders
+      //);
     });
   }
 
@@ -135,7 +152,6 @@ function render(time: number) {
     }
   }
 
-  state.gl.finish();
   Debug.time("buffer data", () => {
     ShadowProgram.recalculateOcclusions(
       state.shadow,
@@ -143,11 +159,9 @@ function render(time: number) {
       state.occluders
     );
   });
-  state.gl.finish();
   Debug.time("render", () => {
     State.render(state);
   });
-  state.gl.finish();
 
   debugElement && Debug.output(debugElement);
 

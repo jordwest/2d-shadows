@@ -2,8 +2,6 @@
 
 precision mediump float;
 
-uniform vec2 lightSourcePos;
-
 varying vec2 v_pos;
 varying float v_alpha;
 

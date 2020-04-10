@@ -83,12 +83,6 @@ export namespace ShadowProgram {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    const uniforms = {
-      lightSourcePos: [0.0, 0.0],
-    };
-
-    twgl.setUniforms(programInfo, uniforms);
-
     gl.useProgram(programInfo.program);
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
     twgl.drawBufferInfo(gl, bufferInfo);
