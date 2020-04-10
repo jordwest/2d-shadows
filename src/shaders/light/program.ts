@@ -1,8 +1,8 @@
 import * as twgl from "twgl.js";
-import vertShader from "./shaders/light.vert";
-import fragShader from "./shaders/light.frag";
-import lightSourcePng from "../assets/lightsource.png";
-import { Vec2 } from "./vec2";
+import vertShader from "./light.vert";
+import fragShader from "./light.frag";
+import lightSourcePng from "../../../assets/lightsource.png";
+import { Vec2 } from "~/geometry/vec2";
 
 export namespace LightProgram {
   export type T = {

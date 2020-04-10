@@ -1,6 +1,6 @@
-import { Vec2, Angle } from "./vec2";
-import { Float32Cursor } from "./cursor";
-import { Debug } from "./debug";
+import { Vec2, Angle } from "~/geometry/vec2";
+import { Float32Cursor } from "~/util/cursor";
+import { Debug } from "~/util/debug";
 
 export namespace SilhouetteOccluder {
   export type T = {

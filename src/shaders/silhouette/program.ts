@@ -1,13 +1,13 @@
 import * as twgl from "twgl.js";
-import vertShader from "./shaders/shadow.vert";
-import fragShader from "./shaders/shadow.frag";
-import { Vec2 } from "./vec2";
-import { Debug } from "./debug";
-import { SilhouetteOccluder } from "./silhouette_occluder";
-import silhouetteTexturePng from "../assets/baked_shadow.png";
-import { Float32Cursor } from "./cursor";
+import vertShader from "./silhouette.vert";
+import fragShader from "./silhouette.frag";
+import { Vec2 } from "~/geometry/vec2";
+import { Debug } from "~/util/debug";
+import { SilhouetteOccluder } from "./geometry";
+import silhouetteTexturePng from "../../../assets/baked_shadow.png";
+import { Float32Cursor } from "~/util/cursor";
 
-export namespace ShadowProgram {
+export namespace SilhouetteProgram {
   export type T = {
     gl: WebGLRenderingContext;
     programInfo: twgl.ProgramInfo;

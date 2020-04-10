@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "~*": ["./src/*"]
+    },
+    "target": "es2015",
+    "module": "ESNext",
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+  },
+
+  "include": [
+    "src/**/*.ts",
+    "imports.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

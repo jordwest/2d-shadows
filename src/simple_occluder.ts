@@ -1,4 +1,4 @@
-import { Vec2, Angle } from "./vec2";
+import { Vec2, Angle } from "~/geometry/vec2";
 
 export namespace SimpleOccluder {
   export type T = {
