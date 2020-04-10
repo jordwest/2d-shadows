@@ -2,6 +2,7 @@ import * as twgl from "twgl.js";
 import vertShader from "./shaders/light.vert";
 import fragShader from "./shaders/light.frag";
 import lightSourcePng from "../assets/lightsource.png";
+import { Vec2 } from "./vec2";
 
 export namespace LightProgram {
   export type T = {
@@ -9,7 +10,6 @@ export namespace LightProgram {
     programInfo: twgl.ProgramInfo;
     bufferInfo: twgl.BufferInfo;
     emissionTexture: WebGLTexture;
-    checkerTexture: WebGLTexture;
     occlusionTexture?: WebGLTexture;
   };
 
@@ -25,29 +25,6 @@ export namespace LightProgram {
       },
     };
     const textures = twgl.createTextures(gl, {
-      checker: {
-        mag: gl.NEAREST,
-        min: gl.LINEAR,
-        src: [
-          255,
-          255,
-          255,
-          255,
-          50,
-          50,
-          50,
-          255,
-          50,
-          50,
-          50,
-          255,
-          255,
-          255,
-          255,
-          255,
-        ],
-      },
-
       emission: {
         src: lightSourcePng,
       },
@@ -56,13 +33,12 @@ export namespace LightProgram {
     return {
       gl,
       emissionTexture: textures.emission,
-      checkerTexture: textures.checker,
       programInfo: twgl.createProgramInfo(gl, [vertShader, fragShader]),
       bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays),
     };
   }
 
-  export function render(state: T) {
+  export function render(state: T, lightPosition: Vec2.T) {
     const { gl, programInfo, bufferInfo } = state;
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -72,6 +48,7 @@ export namespace LightProgram {
     const uniforms = {
       emissionSampler: state.emissionTexture,
       occlusionSampler: state.occlusionTexture,
+      translate: [lightPosition.x, lightPosition.y],
     };
 
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);

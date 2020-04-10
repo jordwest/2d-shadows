@@ -19,26 +19,32 @@ export namespace SilhouetteOccluder {
     const angleToLight = Vec2.angleTo(lightPosition, occluder.origin);
     const offset = Vec2.scalarMult(
       Angle.toUnitVector(Angle.add(angleToLight, (Math.PI / 2) as Angle.T)),
-      0.3
+      occluder.radius
     );
 
     // Figure out the end points for each ray
     const occluderA = Vec2.add(occluder.origin, offset);
-    const thetaRayA = Vec2.angleTo(lightPosition, occluderA);
+    let thetaRayA = Vec2.angleTo(lightPosition, occluderA);
     const endpointA = Vec2.add(
       lightPosition,
       Vec2.scalarMult(Angle.toUnitVector(thetaRayA), lightRadius)
     );
 
     const occluderB = Vec2.add(occluder.origin, Vec2.invert(offset));
-    const thetaRayB = Vec2.angleTo(lightPosition, occluderB);
+    let thetaRayB = Vec2.angleTo(lightPosition, occluderB);
     const endpointB = Vec2.add(
       lightPosition,
       Vec2.scalarMult(Angle.toUnitVector(thetaRayB), lightRadius)
     );
 
+    if (thetaRayB > thetaRayA) {
+      // Ensure ray A angle is always > ray B at wraparound point
+      thetaRayA = (Math.PI * 2 + thetaRayA) as Angle.T;
+    }
+
     Debug.record("thetaRayA", thetaRayA);
     Debug.record("thetaRayB", thetaRayB);
+    Debug.record("angleToLight", angleToLight);
 
     const startDist = Vec2.magnitude(
       Vec2.add(occluder.origin, Vec2.invert(lightPosition))

@@ -27,11 +27,11 @@ void main() {
 
   float currentDist = length(v_pos - lightSourcePos);
   float currentDistNormalised = smoothstep(minDist, maxDist, currentDist);
-  //float occlusionMult = smoothstep(startDist - 0.05, startDist + 0.05, currentDistNormalised);
-  float occlusionMult = step(startDist, currentDistNormalised);
+  float occlusionMult = smoothstep(startDist - 0.1, startDist + 0.1, currentDistNormalised);
+  //float occlusionMult = step(startDist, currentDistNormalised);
   occlusion = occlusion * occlusionMult;
 
-  gl_FragColor = vec4(occlusion, occlusion, occlusion, 1.0);
+  gl_FragColor = vec4(1.0, 1.0, 1.0, occlusion);
   //gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
   //gl_FragColor = vec4(currentDistNormalised, 0.0, 0.0, 1.0);
 }

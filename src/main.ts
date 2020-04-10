@@ -4,9 +4,7 @@ import { ShadowProgram } from "./shadow_program";
 import { Vec2, Angle } from "./vec2";
 import { ScreenCoords, GlCoords } from "./coordinates";
 import { Debug } from "./debug";
-
-const ORIGIN: Readonly<Vec2.T> = { x: 0.0, y: 0.0 };
-const LIGHT_POS = ORIGIN;
+import { SilhouetteOccluder } from "./silhouette_occluder";
 
 namespace State {
   export type T = {
@@ -14,8 +12,10 @@ namespace State {
     canvas: HTMLCanvasElement;
     mode: "emission" | "shadow";
     light: LightProgram.T;
+    lightPosition: Vec2.T;
     shadow: ShadowProgram.T;
     occlusionMap: twgl.FramebufferInfo;
+    occluders: SilhouetteOccluder.T[];
   };
 
   export function init(): T {
@@ -39,7 +39,9 @@ namespace State {
     return {
       gl,
       canvas,
+      occluders: [],
       light,
+      lightPosition: { x: 0, y: 0 },
       shadow: ShadowProgram.init(gl),
       occlusionMap,
       mode: "shadow",
@@ -54,7 +56,7 @@ namespace State {
       .querySelector("button#shadow")
       .addEventListener("click", () => (state.mode = "shadow"));
 
-    state.canvas.addEventListener("mousemove", (e) => {
+    state.canvas.addEventListener("click", (e) => {
       const mousePos = GlCoords.fromScreenCoords(
         ScreenCoords.fromCanvasEvent(e),
         state.canvas
@@ -62,10 +64,30 @@ namespace State {
 
       const occluder = {
         origin: mousePos,
-        radius: 0.1,
+        radius: Math.random() * 0.1 + 0.1,
       };
+      //const occluder = {
+      //  origin: { x: 0.5, y: 0.3 },
+      //  radius: 0.1,
+      //};
 
-      ShadowProgram.recalculateOcclusions(state.shadow, ORIGIN, [occluder]);
+      state.occluders.push(occluder);
+      Debug.record("occluder count", state.occluders.length);
+    });
+
+    state.canvas.addEventListener("mousemove", (e) => {
+      const mousePos = GlCoords.fromScreenCoords(
+        ScreenCoords.fromCanvasEvent(e),
+        state.canvas
+      );
+
+      state.lightPosition = mousePos;
+
+      ShadowProgram.recalculateOcclusions(
+        state.shadow,
+        mousePos,
+        state.occluders
+      );
     });
   }
 
@@ -82,7 +104,7 @@ namespace State {
       ShadowProgram.render(state.shadow);
 
       twgl.bindFramebufferInfo(gl, null);
-      LightProgram.render(state.light);
+      LightProgram.render(state.light, state.lightPosition);
     }
   }
 }
@@ -100,7 +122,7 @@ function render(_time: number) {
   state.gl.finish();
 
   const time = performance.now() - start;
-  Debug.record("frame time", time * 1000);
+  Debug.record("frame time", time);
 
   Debug.output(debugElement);
   requestAnimationFrame(render);

@@ -86,6 +86,7 @@ export namespace ShadowProgram {
     };
     Debug.record("occlusion triangles size", positions.offset);
     Debug.record("occlusion info size", info.offset);
+    state.bufferInfo.numElements = occluders.length * 6;
     state.bufferInfo = twgl.createBufferInfoFromArrays(
       state.gl,
       arrays,
@@ -98,6 +99,9 @@ export namespace ShadowProgram {
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    // Enable alpha blending so shadows can overlap each other
+    gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     const uniforms = {
