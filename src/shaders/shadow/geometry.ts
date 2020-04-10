@@ -1,4 +1,5 @@
 import { Vec2, Angle } from "~/geometry/vec2";
+import { Float32Cursor } from "~/util/cursor";
 
 export namespace SimpleOccluder {
   export type T = {
@@ -7,8 +8,7 @@ export namespace SimpleOccluder {
   };
 
   export function occlusionTriangles(
-    out: Float32Array,
-    offset: number,
+    data: Float32Cursor,
     occluder: T,
     lightPosition: Vec2.T,
     lightRadius: number
@@ -26,19 +26,14 @@ export namespace SimpleOccluder {
       Vec2.scalarMult(Angle.toUnitVector(thetaRayB), lightRadius)
     );
 
-    // Tri 1
-    out[offset] = occluder.a.x;
-    out[offset + 1] = occluder.a.y;
-    out[offset + 2] = endpointA.x;
-    out[offset + 3] = endpointA.y;
-    out[offset + 4] = occluder.b.x;
-    out[offset + 5] = occluder.b.y;
-    // Tri 2
-    out[offset + 6] = occluder.b.x;
-    out[offset + 7] = occluder.b.y;
-    out[offset + 8] = endpointA.x;
-    out[offset + 9] = endpointA.y;
-    out[offset + 10] = endpointB.x;
-    out[offset + 11] = endpointB.y;
+    // Triangle 1
+    data.vec2(occluder.a);
+    data.vec2(endpointA);
+    data.vec2(occluder.b);
+
+    // Triangle 2
+    data.vec2(occluder.b);
+    data.vec2(endpointA);
+    data.vec2(endpointB);
   }
 }
