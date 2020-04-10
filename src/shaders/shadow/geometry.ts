@@ -5,10 +5,12 @@ export namespace SimpleOccluder {
   export type T = {
     a: Vec2.T;
     b: Vec2.T;
+    alpha: number;
   };
 
   export function occlusionTriangles(
     data: Float32Cursor,
+    alpha: Float32Cursor,
     occluder: T,
     lightPosition: Vec2.T,
     lightRadius: number
@@ -28,12 +30,22 @@ export namespace SimpleOccluder {
 
     // Triangle 1
     data.vec2(occluder.a);
+    alpha.push(occluder.alpha);
+
     data.vec2(endpointA);
+    alpha.push(occluder.alpha);
+
     data.vec2(occluder.b);
+    alpha.push(occluder.alpha);
 
     // Triangle 2
     data.vec2(occluder.b);
+    alpha.push(occluder.alpha);
+
     data.vec2(endpointA);
+    alpha.push(occluder.alpha);
+
     data.vec2(endpointB);
+    alpha.push(occluder.alpha);
   }
 }

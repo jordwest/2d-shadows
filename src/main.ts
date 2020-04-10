@@ -39,7 +39,11 @@ namespace State {
     const light = LightProgram.init(gl);
     light.occlusionTexture = occlusionMap.attachments[0];
 
-    const occluders = [{ a: { x: -0.3, y: 0.4 }, b: { x: 0.0, y: 0.3 } }];
+    const occluders = [
+      { a: { x: -0.5, y: 0.4 }, b: { x: -0.2, y: 0.4 }, alpha: 1 },
+      { a: { x: -0.2, y: 0.4 }, b: { x: 0.2, y: 0.4 }, alpha: 0.4 },
+      { a: { x: 0.2, y: 0.4 }, b: { x: 0.5, y: 0.4 }, alpha: 1 },
+    ];
 
     return {
       gl,
@@ -117,7 +121,20 @@ State.registerHandlers(state);
 
 const debugElement = document.querySelector("#debug");
 
-function render(_time: number) {
+const frameCounter = {
+  frames: 0,
+  lastReported: 0,
+};
+function render(time: number) {
+  {
+    const elapsed = time - frameCounter.lastReported;
+    if (elapsed > 1000) {
+      Debug.record("fps", frameCounter.frames / (elapsed / 1000));
+      frameCounter.frames = 0;
+      frameCounter.lastReported = time;
+    }
+  }
+
   state.gl.finish();
   Debug.time("buffer data", () => {
     ShadowProgram.recalculateOcclusions(
@@ -133,6 +150,8 @@ function render(_time: number) {
   state.gl.finish();
 
   debugElement && Debug.output(debugElement);
+
+  frameCounter.frames += 1;
   requestAnimationFrame(render);
 }
 requestAnimationFrame(render);

@@ -5,7 +5,8 @@ precision mediump float;
 uniform vec2 lightSourcePos;
 
 varying vec2 v_pos;
+varying float v_alpha;
 
 void main() {
-  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  gl_FragColor = vec4(1.0, 1.0, 1.0, v_alpha);
 }

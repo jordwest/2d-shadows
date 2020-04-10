@@ -19,6 +19,10 @@ export namespace ShadowProgram {
         numComponents: 2,
         data: new Float32Array(0),
       },
+      alpha: {
+        numComponents: 1,
+        data: new Float32Array(0),
+      },
     };
 
     return {
@@ -36,10 +40,12 @@ export namespace ShadowProgram {
     const positions = new Float32Cursor(
       new Float32Array(occluders.length * 12)
     );
+    const alpha = new Float32Cursor(new Float32Array(occluders.length * 6));
 
     for (const occluder of occluders) {
       SimpleOccluder.occlusionTriangles(
         positions,
+        alpha,
         occluder,
         lightPosition,
         5.0
@@ -51,9 +57,12 @@ export namespace ShadowProgram {
         numComponents: 2,
         data: positions.array,
       },
+      alpha: {
+        numComponents: 1,
+        data: alpha.array,
+      },
     };
 
-    Debug.record("local buffer content", positions.array);
     Debug.record("occlusion triangles cursor offset", positions.offset);
 
     state.bufferInfo = twgl.createBufferInfoFromArrays(
