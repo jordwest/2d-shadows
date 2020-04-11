@@ -18,10 +18,12 @@ export namespace ShadowProgram {
       position: {
         numComponents: 2,
         data: new Float32Array(0),
+        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
       },
       alpha: {
         numComponents: 1,
         data: new Float32Array(0),
+        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
       },
     };
 
@@ -58,10 +60,12 @@ export namespace ShadowProgram {
       position: {
         numComponents: 2,
         data: positions.array,
+        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
       },
       alpha: {
         numComponents: 1,
         data: alpha.array,
+        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
       },
     };
 

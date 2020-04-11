@@ -10,7 +10,6 @@ export namespace LightProgram {
     programInfo: twgl.ProgramInfo;
     bufferInfo: twgl.BufferInfo;
     emissionTexture: WebGLTexture;
-    occlusionTexture?: WebGLTexture;
   };
 
   export function init(gl: WebGLRenderingContext): T {
@@ -38,19 +37,22 @@ export namespace LightProgram {
     };
   }
 
-  export function render(state: T, lightPosition: Vec2.T) {
+  export function render(
+    state: T,
+    lightPosition: Vec2.T,
+    shadowMap: WebGLTexture
+  ) {
     const { gl, programInfo, bufferInfo } = state;
 
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
     gl.useProgram(programInfo.program);
+
     const uniforms = {
       emissionSampler: state.emissionTexture,
-      occlusionSampler: state.occlusionTexture,
+      occlusionSampler: shadowMap,
       translate: [lightPosition.x, lightPosition.y],
     };
 
+    gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);

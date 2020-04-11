@@ -16,12 +16,13 @@ namespace State {
     lightHeight: number;
     shadow: ShadowProgram.T;
     occlusionMap: twgl.FramebufferInfo;
+    occlusionMap2: twgl.FramebufferInfo;
     occluders: SimpleOccluder.T[];
   };
 
   export function init(): T {
     const canvas = document.getElementById("display") as HTMLCanvasElement;
-    const gl = canvas.getContext("webgl");
+    const gl = canvas.getContext("webgl", { alpha: false });
     if (gl == null) {
       throw new Error("Failed to get webgl context");
     }
@@ -36,9 +37,9 @@ namespace State {
     ];
 
     const occlusionMap = twgl.createFramebufferInfo(gl, attachments);
+    const occlusionMap2 = twgl.createFramebufferInfo(gl, attachments);
 
     const light = LightProgram.init(gl);
-    light.occlusionTexture = occlusionMap.attachments[0];
 
     const occluders = [
       {
@@ -101,7 +102,8 @@ namespace State {
       lightHeight: 8,
       shadow: ShadowProgram.init(gl),
       occlusionMap,
-      mode: "shadow",
+      occlusionMap2,
+      mode: "emission",
     };
   }
 
@@ -125,7 +127,7 @@ namespace State {
         a: { ...mousePos },
         b: { ...mousePos },
         bottom: 0,
-        top: 9,
+        top: 20,
         alpha: 1,
       };
       drawingOccluder = {
@@ -164,11 +166,17 @@ namespace State {
     });
   }
 
-  export function render(state: T) {
+  export function render(state: T, time: number) {
     const { gl, canvas } = state;
     twgl.resizeCanvasToDisplaySize(canvas);
     gl.viewport(0, 0, canvas.width, canvas.height);
 
+    ShadowProgram.recalculateOcclusions(
+      state.shadow,
+      state.lightPosition,
+      state.lightHeight,
+      state.occluders
+    );
     if (state.mode === "shadow") {
       twgl.bindFramebufferInfo(gl, null);
       ShadowProgram.render(state.shadow);
@@ -177,7 +185,35 @@ namespace State {
       ShadowProgram.render(state.shadow);
 
       twgl.bindFramebufferInfo(gl, null);
-      LightProgram.render(state.light, state.lightPosition);
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      LightProgram.render(
+        state.light,
+        state.lightPosition,
+        state.occlusionMap.attachments[0]
+      );
+
+      let secondLightPos = {
+        //x: Math.sin(time / 1000),
+        x: 0.0,
+        y: Math.cos(time / 1000),
+      };
+      ShadowProgram.recalculateOcclusions(
+        state.shadow,
+        secondLightPos,
+        state.lightHeight,
+        state.occluders
+      );
+      twgl.bindFramebufferInfo(gl, state.occlusionMap2);
+      ShadowProgram.render(state.shadow);
+
+      twgl.bindFramebufferInfo(gl, null);
+      LightProgram.render(
+        state.light,
+        secondLightPos,
+        state.occlusionMap2.attachments[0]
+      );
     }
   }
 }
@@ -201,17 +237,8 @@ function render(time: number) {
       frameCounter.lastReported = time;
     }
   }
-
-  Debug.time("buffer data", () => {
-    ShadowProgram.recalculateOcclusions(
-      state.shadow,
-      state.lightPosition,
-      state.lightHeight,
-      state.occluders
-    );
-  });
   Debug.time("render", () => {
-    State.render(state);
+    State.render(state, time);
   });
 
   debugElement && Debug.output(debugElement);
