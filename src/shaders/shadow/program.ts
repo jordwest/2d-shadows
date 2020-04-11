@@ -35,6 +35,7 @@ export namespace ShadowProgram {
   export function recalculateOcclusions(
     state: T,
     lightPosition: Vec2.T,
+    lightHeight: number,
     occluders: SimpleOccluder.T[]
   ) {
     const positions = new Float32Cursor(
@@ -48,6 +49,7 @@ export namespace ShadowProgram {
         alpha,
         occluder,
         lightPosition,
+        lightHeight,
         5.0
       );
     }

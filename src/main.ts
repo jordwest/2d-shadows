@@ -13,6 +13,7 @@ namespace State {
     mode: "emission" | "shadow";
     light: LightProgram.T;
     lightPosition: Vec2.T;
+    lightHeight: number;
     shadow: ShadowProgram.T;
     occlusionMap: twgl.FramebufferInfo;
     occluders: SimpleOccluder.T[];
@@ -40,9 +41,55 @@ namespace State {
     light.occlusionTexture = occlusionMap.attachments[0];
 
     const occluders = [
-      { a: { x: -0.3, y: 0.4 }, b: { x: -0.2, y: 0.4 }, alpha: 1 },
-      { a: { x: -0.2, y: 0.4 }, b: { x: 0.2, y: 0.4 }, alpha: 0.4 },
-      { a: { x: 0.2, y: 0.4 }, b: { x: 0.3, y: 0.4 }, alpha: 1 },
+      {
+        a: { x: -0.22, y: 0.4 },
+        b: { x: -0.2, y: 0.4 },
+        alpha: 1,
+        bottom: 0,
+        top: 5,
+      },
+      {
+        a: { x: -0.2, y: 0.4 },
+        b: { x: 0.2, y: 0.4 },
+        alpha: 0.4,
+        bottom: 0,
+        top: 5,
+      },
+      {
+        a: { x: -0.2, y: 0.4 },
+        b: { x: 0.2, y: 0.4 },
+        alpha: 1,
+        bottom: 0,
+        top: 0.2,
+      },
+      {
+        a: { x: -0.22, y: 0.4 },
+        b: { x: 0.22, y: 0.4 },
+        alpha: 1,
+        bottom: 4.8,
+        top: 20,
+      },
+      {
+        a: { x: 0.2, y: 0.4 },
+        b: { x: 0.22, y: 0.4 },
+        alpha: 1,
+        bottom: 0,
+        top: 5,
+      },
+      {
+        a: { x: -0.2, y: 0.4 },
+        b: { x: 0.2, y: 0.4 },
+        alpha: 1,
+        bottom: 2.5,
+        top: 2.7,
+      },
+      {
+        a: { x: -0.02, y: 0.4 },
+        b: { x: 0.02, y: 0.4 },
+        alpha: 1,
+        bottom: 0,
+        top: 5,
+      },
     ];
 
     return {
@@ -51,6 +98,7 @@ namespace State {
       occluders,
       light,
       lightPosition: { x: 0, y: 0 },
+      lightHeight: 8,
       shadow: ShadowProgram.init(gl),
       occlusionMap,
       mode: "shadow",
@@ -76,7 +124,9 @@ namespace State {
       let newOccluder = {
         a: { ...mousePos },
         b: { ...mousePos },
-        alpha: 0.6,
+        bottom: 0,
+        top: 9,
+        alpha: 1,
       };
       drawingOccluder = {
         start: { ...mousePos },
@@ -105,12 +155,12 @@ namespace State {
       );
 
       state.lightPosition = mousePos;
+    });
 
-      //ShadowProgram.recalculateOcclusions(
-      //  state.shadow,
-      //  state.lightPosition,
-      //  state.occluders
-      //);
+    state.canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      console.log(e.deltaY / 100);
+      state.lightHeight += e.deltaY / 100;
     });
   }
 
@@ -156,6 +206,7 @@ function render(time: number) {
     ShadowProgram.recalculateOcclusions(
       state.shadow,
       state.lightPosition,
+      state.lightHeight,
       state.occluders
     );
   });
