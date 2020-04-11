@@ -34,6 +34,7 @@ export namespace SimpleOccluder {
   export function occlusionTriangles(
     data: Float32Cursor,
     alpha: Float32Cursor,
+    angularRange: Float32Cursor,
     occluder: T,
     lightPosition: Vec2.T,
     lightHeight: number,
@@ -82,16 +83,18 @@ export namespace SimpleOccluder {
       shadowEndDistB = lightRadius;
     }
 
+    const blurAngle = 0.03;
+
     // Figure out the end points for each ray
     const thetaRayA = Vec2.angle(occluderRelative.a);
     const thetaRayB = Vec2.angle(occluderRelative.b);
 
     const endpointA = Vec2.scalarMult(
-      Angle.toUnitVector(thetaRayA),
+      Angle.toUnitVector(thetaRayA as Angle.T),
       shadowEndDistA
     );
     const endpointB = Vec2.scalarMult(
-      Angle.toUnitVector(thetaRayB),
+      Angle.toUnitVector(thetaRayB as Angle.T),
       shadowEndDistB
     );
     const startPointA = Vec2.scalarMult(
@@ -106,21 +109,27 @@ export namespace SimpleOccluder {
     // Triangle 1
     data.vec2(startPointA);
     alpha.push(occluder.alpha);
+    angularRange.push2(thetaRayA, thetaRayB);
 
     data.vec2(endpointA);
     alpha.push(occluder.alpha);
+    angularRange.push2(thetaRayA, thetaRayB);
 
     data.vec2(startPointB);
     alpha.push(occluder.alpha);
+    angularRange.push2(thetaRayA, thetaRayB);
 
     // Triangle 2
     data.vec2(startPointB);
     alpha.push(occluder.alpha);
+    angularRange.push2(thetaRayA, thetaRayB);
 
     data.vec2(endpointA);
     alpha.push(occluder.alpha);
+    angularRange.push2(thetaRayA, thetaRayB);
 
     data.vec2(endpointB);
     alpha.push(occluder.alpha);
+    angularRange.push2(thetaRayA, thetaRayB);
   }
 }

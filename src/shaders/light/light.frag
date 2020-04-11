@@ -2,6 +2,7 @@ precision mediump float;
 
 uniform sampler2D emissionSampler;
 uniform sampler2D occlusionSampler;
+uniform vec3 tint;
 
 varying vec2 v_emissionTexCoord;
 
@@ -13,5 +14,5 @@ void main() {
   float lightness = max(col.r, col.g);
   lightness = max(lightness, col.b);
   lightness = min(lightness, 1.0 - occlusion.r);
-  gl_FragColor = vec4(col.r, col.g, col.b, lightness);
+  gl_FragColor = vec4(col.rgb * tint, lightness);
 }

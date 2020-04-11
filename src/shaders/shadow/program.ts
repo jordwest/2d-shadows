@@ -25,6 +25,11 @@ export namespace ShadowProgram {
         data: new Float32Array(0),
         drawType: WebGLRenderingContext.DYNAMIC_DRAW,
       },
+      //angularRange: {
+      //  numComponents: 2,
+      //  data: new Float32Array(0),
+      //  drawType: WebGLRenderingContext.DYNAMIC_DRAW,
+      //},
     };
 
     return {
@@ -44,11 +49,15 @@ export namespace ShadowProgram {
       new Float32Array(occluders.length * 12)
     );
     const alpha = new Float32Cursor(new Float32Array(occluders.length * 6));
+    const angularRange = new Float32Cursor(
+      new Float32Array(occluders.length * 6)
+    );
 
     for (const occluder of occluders) {
       SimpleOccluder.occlusionTriangles(
         positions,
         alpha,
+        angularRange,
         occluder,
         lightPosition,
         lightHeight,
@@ -67,6 +76,11 @@ export namespace ShadowProgram {
         data: alpha.array,
         drawType: WebGLRenderingContext.DYNAMIC_DRAW,
       },
+      //angularRange: {
+      //  numComponents: 2,
+      //  data: angularRange.array,
+      //  drawType: WebGLRenderingContext.DYNAMIC_DRAW,
+      //},
     };
 
     Debug.record("occlusion triangles cursor offset", positions.offset);

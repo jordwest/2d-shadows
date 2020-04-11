@@ -1,9 +1,8 @@
 import * as twgl from "twgl.js";
-import vertShader from "./light.vert";
-import fragShader from "./light.frag";
-import { Vec2 } from "~/geometry/vec2";
+import vertShader from "./sprite.vert";
+import fragShader from "./sprite.frag";
 
-export namespace LightProgram {
+export namespace SpriteProgram {
   export type T = {
     gl: WebGLRenderingContext;
     programInfo: twgl.ProgramInfo;
@@ -16,9 +15,13 @@ export namespace LightProgram {
         numComponents: 2,
         data: [-1, -1, +1, -1, -1, +1, +1, -1, -1, +1, +1, +1],
       },
-      emissionTexCoord: {
+      lightTexCoord: {
         numComponents: 2,
         data: [0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1],
+      },
+      spriteTexCoord: {
+        numComponents: 2,
+        data: [0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0],
       },
     };
 
@@ -31,24 +34,21 @@ export namespace LightProgram {
 
   export function render(
     state: T,
-    lightPosition: Vec2.T,
-    lightMap: WebGLTexture,
-    shadowMap: WebGLTexture,
-    tint: [number, number, number]
+    lights: WebGLTexture,
+    spriteTexture: WebGLTexture
   ) {
     const { gl, programInfo, bufferInfo } = state;
 
     gl.useProgram(programInfo.program);
 
     const uniforms = {
-      emissionSampler: lightMap,
-      occlusionSampler: shadowMap,
-      tint,
-      translate: [lightPosition.x, lightPosition.y],
+      lightSampler: lights,
+      spriteSampler: spriteTexture,
+      translate: [0.0, 0.0],
     };
 
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.DST_ALPHA);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
     twgl.setUniforms(programInfo, uniforms);
