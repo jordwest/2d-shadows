@@ -3,13 +3,29 @@ import { Float32Cursor } from "~/util/cursor";
 import { Debug } from "~util/debug";
 
 export namespace SimpleOccluder {
-  export type T = {
+  export type Line = {
     a: Vec2.T;
     b: Vec2.T;
     bottom: number;
     top: number;
     alpha: number;
   };
+  export type Circular = {
+    r: number;
+    c: Vec2.T;
+    bottom: number;
+    top: number;
+    alpha: number;
+  };
+  export type T =
+    | {
+        t: "circular";
+        v: Circular;
+      }
+    | {
+        t: "line";
+        v: Line;
+      };
 
   function calcShadowEdge(
     occlusionRelative: Vec2.T,
@@ -41,10 +57,35 @@ export namespace SimpleOccluder {
     lightHeight: number,
     lightRadius: number
   ) {
+    let lineOccluder: Line;
+    if (occluder.t === "line") {
+      lineOccluder = occluder.v;
+    } else if (occluder.t === "circular") {
+      const angleToOcclusion = Vec2.angle(
+        Vec2.add(Vec2.invert(lightPosition), occluder.v.c)
+      );
+      // Find the first line pointing from the center to the outside
+      const radiusLine = Vec2.scalarMult(
+        Angle.toUnitVector((angleToOcclusion + Math.PI / 2) as Angle.T),
+        occluder.v.r
+      );
+      const a = Vec2.add(occluder.v.c, radiusLine);
+      const b = Vec2.add(occluder.v.c, Vec2.invert(radiusLine));
+      lineOccluder = {
+        a,
+        b,
+        bottom: occluder.v.bottom,
+        top: occluder.v.top,
+        alpha: occluder.v.alpha,
+      };
+    } else {
+      throw new Error("unexpected occluder type");
+    }
+
     // Find the position of the occluder relative to the light source
     const occluderRelative = {
-      a: Vec2.add(occluder.a, Vec2.invert(lightPosition)),
-      b: Vec2.add(occluder.b, Vec2.invert(lightPosition)),
+      a: Vec2.add(lineOccluder.a, Vec2.invert(lightPosition)),
+      b: Vec2.add(lineOccluder.b, Vec2.invert(lightPosition)),
     };
     Debug.record("occluder relative y", occluderRelative.a.y);
 
@@ -67,7 +108,7 @@ export namespace SimpleOccluder {
 
     let shadowStartDistA = calcShadowEdge(
       occluderRelative.a,
-      occluder.bottom,
+      lineOccluder.bottom,
       lightHeight
     );
     if (shadowStartDistA == Infinity) {
@@ -76,7 +117,7 @@ export namespace SimpleOccluder {
 
     let shadowStartDistB = calcShadowEdge(
       occluderRelative.b,
-      occluder.bottom,
+      lineOccluder.bottom,
       lightHeight
     );
     if (shadowStartDistB == Infinity) {
@@ -85,7 +126,7 @@ export namespace SimpleOccluder {
 
     let shadowEndDistA = calcShadowEdge(
       occluderRelative.a,
-      occluder.top,
+      lineOccluder.top,
       lightHeight
     );
     if (shadowEndDistA == Infinity) {
@@ -94,7 +135,7 @@ export namespace SimpleOccluder {
 
     let shadowEndDistB = calcShadowEdge(
       occluderRelative.b,
-      occluder.top,
+      lineOccluder.top,
       lightHeight
     );
     if (shadowEndDistB == Infinity) {
@@ -164,7 +205,7 @@ export namespace SimpleOccluder {
     // Record vertex info that's the same for the whole instance.
     // To be replaced when instanced rendering is implemented
     const instanceInfo = () => {
-      alpha.push(occluder.alpha);
+      alpha.push(lineOccluder.alpha);
     };
 
     // Triangle 1

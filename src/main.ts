@@ -12,7 +12,6 @@ import backgroundPng from "../assets/houseinthewoods.png";
 import { SpriteProgram } from "~shaders/sprite/program";
 
 const NEW_OCCLUDER_ALPHA = 1.0;
-const ENABLE_MOON = false;
 
 function pixelToGlCoord(x: number, y: number): Vec2.T {
   return { x: (x / 512) * 2 - 1, y: -((y / 512) * 2 - 1) };
@@ -25,11 +24,14 @@ function wall(
   y2: number
 ): SimpleOccluder.T {
   return {
-    a: pixelToGlCoord(x1, y1),
-    b: pixelToGlCoord(x2, y2),
-    alpha: 1,
-    bottom: 0,
-    top: 20,
+    t: "line",
+    v: {
+      a: pixelToGlCoord(x1, y1),
+      b: pixelToGlCoord(x2, y2),
+      alpha: 1,
+      bottom: 0,
+      top: 20,
+    },
   };
 }
 function windowOccluder(
@@ -39,11 +41,26 @@ function windowOccluder(
   y2: number
 ): SimpleOccluder.T {
   return {
-    a: pixelToGlCoord(x1, y1),
-    b: pixelToGlCoord(x2, y2),
-    alpha: 0.7,
-    bottom: 0,
-    top: 20,
+    t: "line",
+    v: {
+      a: pixelToGlCoord(x1, y1),
+      b: pixelToGlCoord(x2, y2),
+      alpha: 0.9,
+      bottom: 0,
+      top: 20,
+    },
+  };
+}
+function tree(x1: number, y1: number, r: number): SimpleOccluder.T {
+  return {
+    t: "circular",
+    v: {
+      c: pixelToGlCoord(x1, y1),
+      r: (r / 512) * 2,
+      alpha: 1.0,
+      bottom: 0,
+      top: 20,
+    },
   };
 }
 
@@ -109,17 +126,10 @@ namespace State {
     });
     const defaultLight: Light = {
       shadowMap: twgl.createFramebufferInfo(gl, attachments),
-      lightMap: textures.lamp,
+      lightMap: textures.torch,
       position: { x: 0, y: 0 },
       height: 8,
       tint: [1.0, 0.96, 0.709],
-    };
-    const moon: Light = {
-      shadowMap: twgl.createFramebufferInfo(gl, attachments),
-      lightMap: textures.lamp,
-      position: { x: 0, y: 0 },
-      height: 60,
-      tint: [0.2, 0.2, 0.4],
     };
     const fire: Light = {
       shadowMap: twgl.createFramebufferInfo(gl, attachments),
@@ -127,6 +137,13 @@ namespace State {
       position: pixelToGlCoord(173, 252),
       height: 5,
       tint: [1.0, 1.0, 1.0],
+    };
+    const kitchenLight: Light = {
+      shadowMap: twgl.createFramebufferInfo(gl, attachments),
+      lightMap: textures.lamp,
+      position: pixelToGlCoord(444, 243),
+      height: 10,
+      tint: [1.0, 0.96, 0.809],
     };
 
     const occluders: SimpleOccluder.T[] = [
@@ -146,12 +163,29 @@ namespace State {
       windowOccluder(298, 233, 298, 196),
       wall(298, 214, 298, 215),
       wall(298, 196, 298, 180),
+
+      tree(42, 249, 9),
+      tree(428, 472, 12),
+      tree(361, 463, 12),
+      tree(271, 434, 12),
+      tree(217, 449, 4),
+      tree(174, 427, 10),
+      tree(147, 380, 11),
+      tree(90, 423, 12),
+      tree(75, 318, 13),
+      tree(25, 351, 4),
+      tree(71, 201, 11),
+      tree(44, 130, 11),
+      tree(125, 84, 12),
+      tree(175, 56, 4),
+      tree(175, 56, 4),
+      tree(222, 95, 11),
+      tree(286, 69, 12),
+      tree(337, 97, 10),
+      tree(362, 54, 8),
+      tree(427, 75, 13),
     ];
-    const lights = [defaultLight];
-    if (ENABLE_MOON) {
-      lights.push(moon);
-    }
-    lights.push(fire);
+    const lights = [defaultLight, fire, kitchenLight];
 
     return {
       gl,
@@ -177,13 +211,13 @@ namespace State {
 
     let drawingOccluder:
       | undefined
-      | { start: Vec2.T; occluderRef: SimpleOccluder.T };
+      | { start: Vec2.T; occluderRef: SimpleOccluder.Line };
     state.canvas.addEventListener("mousedown", (e) => {
       const mousePos = GlCoords.fromScreenCoords(
         ScreenCoords.fromCanvasEvent(e),
         state.canvas
       );
-      let newOccluder = {
+      let newOccluder: SimpleOccluder.Line = {
         a: { ...mousePos },
         b: { ...mousePos },
         bottom: 0,
@@ -194,7 +228,7 @@ namespace State {
         start: { ...mousePos },
         occluderRef: newOccluder,
       };
-      state.occluders.push(newOccluder);
+      state.occluders.push({ t: "line", v: newOccluder });
       Debug.record("occluder count", state.occluders.length);
     });
     state.canvas.addEventListener("mousemove", (e) => {
@@ -299,18 +333,20 @@ function render(time: number) {
   {
     const elapsed = time - frameCounter.lastReported;
     if (elapsed > 1000) {
-      Debug.record("fps", frameCounter.frames / (elapsed / 1000));
+      const fps = frameCounter.frames / (elapsed / 1000);
+      Debug.record("fps", fps);
+      console.log("fps", fps);
       frameCounter.frames = 0;
       frameCounter.lastReported = time;
     }
   }
 
-  if (ENABLE_MOON) {
-    state.lights[1].position = {
-      x: 0.0,
-      y: Math.cos(time / 1000),
-    };
-  }
+  const fireCentre = pixelToGlCoord(173, 252);
+  state.lights[1].position = {
+    x: fireCentre.x + (Math.sin(time / 20) + Math.cos(time / 120)) * 0.01,
+    y: fireCentre.y + (Math.cos(time / 44) + Math.sin(time / 160)) * 0.01,
+  };
+  state.lights[1].height = 5 + Math.sin(time / 33) * 0.1;
   Debug.time("render", () => {
     if (state.mode === "shadow") {
       State.renderShadow(state);

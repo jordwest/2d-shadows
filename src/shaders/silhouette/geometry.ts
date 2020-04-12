@@ -16,7 +16,7 @@ export namespace SilhouetteOccluder {
     lightPosition: Vec2.T,
     lightRadius: number
   ) {
-    const angleToLight = Vec2.angleTo(lightPosition, occluder.origin);
+    const angleToLight = Vec2.angleBetween(lightPosition, occluder.origin);
     const offset = Vec2.scalarMult(
       Angle.toUnitVector(Angle.add(angleToLight, (Math.PI / 2) as Angle.T)),
       occluder.radius
@@ -24,14 +24,14 @@ export namespace SilhouetteOccluder {
 
     // Figure out the end points for each ray
     const occluderA = Vec2.add(occluder.origin, offset);
-    let thetaRayA = Vec2.angleTo(lightPosition, occluderA);
+    let thetaRayA = Vec2.angleBetween(lightPosition, occluderA);
     const endpointA = Vec2.add(
       lightPosition,
       Vec2.scalarMult(Angle.toUnitVector(thetaRayA), lightRadius)
     );
 
     const occluderB = Vec2.add(occluder.origin, Vec2.invert(offset));
-    let thetaRayB = Vec2.angleTo(lightPosition, occluderB);
+    let thetaRayB = Vec2.angleBetween(lightPosition, occluderB);
     const endpointB = Vec2.add(
       lightPosition,
       Vec2.scalarMult(Angle.toUnitVector(thetaRayB), lightRadius)
