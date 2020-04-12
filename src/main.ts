@@ -7,11 +7,45 @@ import { SimpleOccluder } from "~shaders/shadow/geometry";
 import { ShadowProgram } from "~shaders/shadow/program";
 import lampPng from "../assets/lightsource.png";
 import torchPng from "../assets/torch.png";
-import backgroundPng from "../assets/background.png";
+import firePng from "../assets/fire.png";
+import backgroundPng from "../assets/houseinthewoods.png";
 import { SpriteProgram } from "~shaders/sprite/program";
 
 const NEW_OCCLUDER_ALPHA = 1.0;
 const ENABLE_MOON = false;
+
+function pixelToGlCoord(x: number, y: number): Vec2.T {
+  return { x: (x / 512) * 2 - 1, y: -((y / 512) * 2 - 1) };
+}
+
+function wall(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+): SimpleOccluder.T {
+  return {
+    a: pixelToGlCoord(x1, y1),
+    b: pixelToGlCoord(x2, y2),
+    alpha: 1,
+    bottom: 0,
+    top: 20,
+  };
+}
+function windowOccluder(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+): SimpleOccluder.T {
+  return {
+    a: pixelToGlCoord(x1, y1),
+    b: pixelToGlCoord(x2, y2),
+    alpha: 0.7,
+    bottom: 0,
+    top: 20,
+  };
+}
 
 namespace State {
   type Light = {
@@ -59,6 +93,9 @@ namespace State {
       torch: {
         src: torchPng,
       },
+      fire: {
+        src: firePng,
+      },
       sun: {
         mag: gl.NEAREST,
         min: gl.LINEAR,
@@ -84,64 +121,37 @@ namespace State {
       height: 60,
       tint: [0.2, 0.2, 0.4],
     };
+    const fire: Light = {
+      shadowMap: twgl.createFramebufferInfo(gl, attachments),
+      lightMap: textures.fire,
+      position: pixelToGlCoord(173, 252),
+      height: 5,
+      tint: [1.0, 1.0, 1.0],
+    };
 
     const occluders: SimpleOccluder.T[] = [
-      /*
-      {
-        a: { x: -0.22, y: 0.4 },
-        b: { x: -0.2, y: 0.4 },
-        alpha: 1,
-        bottom: 0,
-        top: 5,
-      },
-      {
-        a: { x: -0.2, y: 0.4 },
-        b: { x: 0.2, y: 0.4 },
-        alpha: 0.4,
-        bottom: 0,
-        top: 5,
-      },
-      {
-        a: { x: -0.2, y: 0.4 },
-        b: { x: 0.2, y: 0.4 },
-        alpha: 1,
-        bottom: 0,
-        top: 0.2,
-      },
-      {
-        a: { x: -0.22, y: 0.4 },
-        b: { x: 0.22, y: 0.4 },
-        alpha: 1,
-        bottom: 4.8,
-        top: 20,
-      },
-      {
-        a: { x: 0.2, y: 0.4 },
-        b: { x: 0.22, y: 0.4 },
-        alpha: 1,
-        bottom: 0,
-        top: 5,
-      },
-      {
-        a: { x: -0.2, y: 0.4 },
-        b: { x: 0.2, y: 0.4 },
-        alpha: 1,
-        bottom: 2.5,
-        top: 2.7,
-      },
-      {
-        a: { x: -0.02, y: 0.4 },
-        b: { x: 0.02, y: 0.4 },
-        alpha: 1,
-        bottom: 0,
-        top: 5,
-      },
-    */
+      wall(298, 180, 469, 180),
+      wall(469, 180, 469, 208),
+      wall(469, 215, 469, 230),
+      windowOccluder(469, 230, 469, 241),
+      wall(469, 241, 469, 302),
+      wall(469, 311, 469, 326),
+      wall(469, 326, 448, 326),
+      windowOccluder(447, 326, 424, 326),
+      wall(423, 326, 339, 326),
+      windowOccluder(338, 326, 315, 326),
+      wall(314, 326, 298, 326),
+      wall(298, 326, 298, 256),
+      wall(298, 246, 298, 232),
+      windowOccluder(298, 233, 298, 196),
+      wall(298, 214, 298, 215),
+      wall(298, 196, 298, 180),
     ];
     const lights = [defaultLight];
     if (ENABLE_MOON) {
       lights.push(moon);
     }
+    lights.push(fire);
 
     return {
       gl,

@@ -129,7 +129,7 @@ export namespace SimpleOccluder {
     // Average the endpoints to find the midpoint between them
     const endMidpoint = Vec2.scalarMult(Vec2.add(endpointA, endpointB), 0.5);
 
-    let blur = 0.1;
+    let blur = 0.05;
     const blurFactorA = blur * shadowEndDistA;
     Debug.record("blurFactorA", blurFactorA);
     Debug.record("distBetween", distBetween);
@@ -142,7 +142,10 @@ export namespace SimpleOccluder {
         ? endMidpoint
         : Vec2.add(
             endpointA,
-            Vec2.scalarMult(Vec2.invert(endpointNormal), blur * shadowEndDistA)
+            Vec2.scalarMult(
+              Vec2.invert(endpointNormal),
+              blur * shadowEndDistA * 0.5
+            )
           );
 
     const blurFactorB = blur * shadowEndDistB;
@@ -155,7 +158,7 @@ export namespace SimpleOccluder {
         ? endMidpoint
         : Vec2.add(
             endpointB,
-            Vec2.scalarMult(endpointNormal, blur * shadowEndDistB)
+            Vec2.scalarMult(endpointNormal, blur * shadowEndDistB * 0.5)
           );
 
     // Record vertex info that's the same for the whole instance.
