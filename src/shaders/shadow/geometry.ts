@@ -34,7 +34,8 @@ export namespace SimpleOccluder {
   export function occlusionTriangles(
     data: Float32Cursor,
     alpha: Float32Cursor,
-    angularRange: Float32Cursor,
+    blurPositions: Float32Cursor,
+    blurTriPositions: Float32Cursor,
     occluder: T,
     lightPosition: Vec2.T,
     lightHeight: number,
@@ -46,6 +47,23 @@ export namespace SimpleOccluder {
       b: Vec2.add(occluder.b, Vec2.invert(lightPosition)),
     };
     Debug.record("occluder relative y", occluderRelative.a.y);
+
+    // Figure out the end points for each ray
+    const theta = {
+      a: Vec2.angle(occluderRelative.a),
+      b: Vec2.angle(occluderRelative.b),
+    };
+    //Debug.record("thetas", theta);
+
+    //if (theta.a < theta.b) {
+    //  const tempOcc = occluderRelative.a;
+    //  occluderRelative.a = occluderRelative.b;
+    //  occluderRelative.b = tempOcc;
+
+    //  const tempTheta = theta.a;
+    //  theta.a = theta.b;
+    //  theta.b = tempTheta;
+    //}
 
     let shadowStartDistA = calcShadowEdge(
       occluderRelative.a,
@@ -83,53 +101,107 @@ export namespace SimpleOccluder {
       shadowEndDistB = lightRadius;
     }
 
-    const blurAngle = 0.03;
-
-    // Figure out the end points for each ray
-    const thetaRayA = Vec2.angle(occluderRelative.a);
-    const thetaRayB = Vec2.angle(occluderRelative.b);
-
     const endpointA = Vec2.scalarMult(
-      Angle.toUnitVector(thetaRayA as Angle.T),
+      Angle.toUnitVector(theta.a),
       shadowEndDistA
     );
     const endpointB = Vec2.scalarMult(
-      Angle.toUnitVector(thetaRayB as Angle.T),
+      Angle.toUnitVector(theta.b),
       shadowEndDistB
     );
     const startPointA = Vec2.scalarMult(
-      Angle.toUnitVector(thetaRayA),
+      Angle.toUnitVector(theta.a),
       shadowStartDistA
     );
     const startPointB = Vec2.scalarMult(
-      Angle.toUnitVector(thetaRayB),
+      Angle.toUnitVector(theta.b),
       shadowStartDistB
     );
 
+    const angleBetween = Vec2.angleBetween(endpointA, endpointB);
+    const distBetween = Vec2.magnitude(
+      Vec2.add(endpointA, Vec2.invert(endpointB))
+    );
+    const endpointNormal = Angle.toUnitVector(
+      (angleBetween - Math.PI) as Angle.T
+    );
+
+    // Average the endpoints to find the midpoint between them
+    const endMidpoint = Vec2.scalarMult(Vec2.add(endpointA, endpointB), 0.5);
+
+    let blur = 0.1;
+    const blurFactorA = blur * shadowEndDistA;
+    Debug.record("blurFactorA", blurFactorA);
+    Debug.record("distBetween", distBetween);
+    const shadowOuterA = Vec2.add(
+      endpointA,
+      Vec2.scalarMult(endpointNormal, blur * shadowEndDistA)
+    );
+    const shadowInnerA =
+      blurFactorA > distBetween / 2
+        ? endMidpoint
+        : Vec2.add(
+            endpointA,
+            Vec2.scalarMult(Vec2.invert(endpointNormal), blur * shadowEndDistA)
+          );
+
+    const blurFactorB = blur * shadowEndDistB;
+    const shadowOuterB = Vec2.add(
+      endpointB,
+      Vec2.scalarMult(Vec2.invert(endpointNormal), blur * shadowEndDistB)
+    );
+    const shadowInnerB =
+      blurFactorB > distBetween / 2
+        ? endMidpoint
+        : Vec2.add(
+            endpointB,
+            Vec2.scalarMult(endpointNormal, blur * shadowEndDistB)
+          );
+
+    // Record vertex info that's the same for the whole instance.
+    // To be replaced when instanced rendering is implemented
+    const instanceInfo = () => {
+      alpha.push(occluder.alpha);
+    };
+
     // Triangle 1
     data.vec2(startPointA);
-    alpha.push(occluder.alpha);
-    angularRange.push2(thetaRayA, thetaRayB);
+    instanceInfo();
 
-    data.vec2(endpointA);
-    alpha.push(occluder.alpha);
-    angularRange.push2(thetaRayA, thetaRayB);
+    data.vec2(shadowInnerA);
+    instanceInfo();
 
     data.vec2(startPointB);
-    alpha.push(occluder.alpha);
-    angularRange.push2(thetaRayA, thetaRayB);
+    instanceInfo();
+
+    // Shadow blur left hand side
+    blurPositions.vec2(occluderRelative.a);
+    blurTriPositions.push2(0, 0);
+
+    blurPositions.vec2(shadowInnerA);
+    blurTriPositions.push2(1, 1);
+
+    blurPositions.vec2(shadowOuterA);
+    blurTriPositions.push2(-1, 1);
 
     // Triangle 2
     data.vec2(startPointB);
-    alpha.push(occluder.alpha);
-    angularRange.push2(thetaRayA, thetaRayB);
+    instanceInfo();
 
-    data.vec2(endpointA);
-    alpha.push(occluder.alpha);
-    angularRange.push2(thetaRayA, thetaRayB);
+    data.vec2(shadowInnerA);
+    instanceInfo();
 
-    data.vec2(endpointB);
-    alpha.push(occluder.alpha);
-    angularRange.push2(thetaRayA, thetaRayB);
+    data.vec2(shadowInnerB);
+    instanceInfo();
+
+    // Shadow blur right hand side
+    blurPositions.vec2(occluderRelative.b);
+    blurTriPositions.push2(0, 0);
+
+    blurPositions.vec2(shadowInnerB);
+    blurTriPositions.push2(1, 1);
+
+    blurPositions.vec2(shadowOuterB);
+    blurTriPositions.push2(-1, 1);
   }
 }

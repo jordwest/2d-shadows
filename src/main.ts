@@ -10,6 +10,9 @@ import torchPng from "../assets/torch.png";
 import backgroundPng from "../assets/background.png";
 import { SpriteProgram } from "~shaders/sprite/program";
 
+const NEW_OCCLUDER_ALPHA = 1.0;
+const ENABLE_MOON = false;
+
 namespace State {
   type Light = {
     position: Vec2.T;
@@ -69,7 +72,7 @@ namespace State {
     });
     const defaultLight: Light = {
       shadowMap: twgl.createFramebufferInfo(gl, attachments),
-      lightMap: textures.torch,
+      lightMap: textures.lamp,
       position: { x: 0, y: 0 },
       height: 8,
       tint: [1.0, 0.96, 0.709],
@@ -82,7 +85,8 @@ namespace State {
       tint: [0.2, 0.2, 0.4],
     };
 
-    const occluders = [
+    const occluders: SimpleOccluder.T[] = [
+      /*
       {
         a: { x: -0.22, y: 0.4 },
         b: { x: -0.2, y: 0.4 },
@@ -132,7 +136,12 @@ namespace State {
         bottom: 0,
         top: 5,
       },
+    */
     ];
+    const lights = [defaultLight];
+    if (ENABLE_MOON) {
+      lights.push(moon);
+    }
 
     return {
       gl,
@@ -143,7 +152,7 @@ namespace State {
       spriteProgram: SpriteProgram.init(gl),
       backgroundTexture: textures.background,
       renderedLights: twgl.createFramebufferInfo(gl),
-      lights: [defaultLight, moon],
+      lights,
       mode: "emission",
     };
   }
@@ -169,7 +178,7 @@ namespace State {
         b: { ...mousePos },
         bottom: 0,
         top: 20,
-        alpha: 1,
+        alpha: NEW_OCCLUDER_ALPHA,
       };
       drawingOccluder = {
         start: { ...mousePos },
@@ -205,6 +214,23 @@ namespace State {
       console.log(e.deltaY / 100);
       state.lights[0].height += e.deltaY / 100;
     });
+  }
+
+  export function renderShadow(state: T) {
+    const { gl, canvas } = state;
+    twgl.resizeCanvasToDisplaySize(canvas);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
+    ShadowProgram.recalculateOcclusions(
+      state.shadowProgram,
+      state.lights[0].position,
+      state.lights[0].height,
+      state.occluders
+    );
+    twgl.bindFramebufferInfo(gl, null);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    ShadowProgram.render(state.shadowProgram);
   }
 
   export function render(state: T) {
@@ -269,12 +295,18 @@ function render(time: number) {
     }
   }
 
-  state.lights[1].position = {
-    x: 0.0,
-    y: Math.cos(time / 1000),
-  };
+  if (ENABLE_MOON) {
+    state.lights[1].position = {
+      x: 0.0,
+      y: Math.cos(time / 1000),
+    };
+  }
   Debug.time("render", () => {
-    State.render(state);
+    if (state.mode === "shadow") {
+      State.renderShadow(state);
+    } else {
+      State.render(state);
+    }
   });
 
   debugElement && Debug.output(debugElement);

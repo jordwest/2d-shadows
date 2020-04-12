@@ -5,12 +5,14 @@ import { Vec2 } from "~/geometry/vec2";
 import { Debug } from "~/util/debug";
 import { SimpleOccluder } from "./geometry";
 import { Float32Cursor } from "~/util/cursor";
+import { ShadowBlurProgram } from "~shaders/shadowblur/program";
 
 export namespace ShadowProgram {
   export type T = {
     gl: WebGLRenderingContext;
     programInfo: twgl.ProgramInfo;
     bufferInfo: twgl.BufferInfo;
+    blurProgram: ShadowBlurProgram.T;
   };
 
   export function init(gl: WebGLRenderingContext): T {
@@ -25,15 +27,16 @@ export namespace ShadowProgram {
         data: new Float32Array(0),
         drawType: WebGLRenderingContext.DYNAMIC_DRAW,
       },
-      //angularRange: {
-      //  numComponents: 2,
-      //  data: new Float32Array(0),
-      //  drawType: WebGLRenderingContext.DYNAMIC_DRAW,
-      //},
+      angularRange: {
+        numComponents: 2,
+        data: new Float32Array(0),
+        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
+      },
     };
 
     return {
       gl,
+      blurProgram: ShadowBlurProgram.init(gl),
       programInfo: twgl.createProgramInfo(gl, [vertShader, fragShader]),
       bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays),
     };
@@ -49,15 +52,20 @@ export namespace ShadowProgram {
       new Float32Array(occluders.length * 12)
     );
     const alpha = new Float32Cursor(new Float32Array(occluders.length * 6));
-    const angularRange = new Float32Cursor(
-      new Float32Array(occluders.length * 6)
+
+    const blurPositions = new Float32Cursor(
+      new Float32Array(occluders.length * 12)
+    );
+    const blurTriPositions = new Float32Cursor(
+      new Float32Array(occluders.length * 12)
     );
 
     for (const occluder of occluders) {
       SimpleOccluder.occlusionTriangles(
         positions,
         alpha,
-        angularRange,
+        blurPositions,
+        blurTriPositions,
         occluder,
         lightPosition,
         lightHeight,
@@ -76,11 +84,18 @@ export namespace ShadowProgram {
         data: alpha.array,
         drawType: WebGLRenderingContext.DYNAMIC_DRAW,
       },
-      //angularRange: {
-      //  numComponents: 2,
-      //  data: angularRange.array,
-      //  drawType: WebGLRenderingContext.DYNAMIC_DRAW,
-      //},
+    };
+    const blurArrays = {
+      position: {
+        numComponents: 2,
+        data: blurPositions.array,
+        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
+      },
+      triPosition: {
+        numComponents: 2,
+        data: blurTriPositions.array,
+        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
+      },
     };
 
     Debug.record("occlusion triangles cursor offset", positions.offset);
@@ -90,7 +105,13 @@ export namespace ShadowProgram {
       arrays,
       state.bufferInfo
     );
+    state.blurProgram.bufferInfo = twgl.createBufferInfoFromArrays(
+      state.gl,
+      blurArrays,
+      state.blurProgram.bufferInfo
+    );
     state.bufferInfo.numElements = occluders.length * 6;
+    state.blurProgram.bufferInfo.numElements = occluders.length * 6;
   }
 
   export function render(state: T) {
@@ -106,5 +127,7 @@ export namespace ShadowProgram {
     gl.useProgram(programInfo.program);
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
     twgl.drawBufferInfo(gl, bufferInfo);
+
+    ShadowBlurProgram.render(state.blurProgram);
   }
 }

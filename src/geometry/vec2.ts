@@ -23,6 +23,13 @@ export namespace Vec2 {
     return { x: a.x + b.x, y: a.y + b.y } as C;
   }
 
+  /**
+   * Returns the unit vector perpendicular to this vector
+   */
+  export function perpendicular(v: T): T {
+    return { x: -v.y, y: v.x };
+  }
+
   export function magnitude(v: T): number {
     return Math.hypot(v.x, v.y);
   }
