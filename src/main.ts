@@ -45,7 +45,7 @@ function windowOccluder(
     v: {
       a: pixelToGlCoord(x1, y1),
       b: pixelToGlCoord(x2, y2),
-      alpha: 0.9,
+      alpha: 0.7,
       bottom: 0,
       top: 20,
     },
@@ -124,27 +124,6 @@ namespace State {
         src: backgroundPng,
       },
     });
-    const defaultLight: Light = {
-      shadowMap: twgl.createFramebufferInfo(gl, attachments),
-      lightMap: textures.torch,
-      position: { x: 0, y: 0 },
-      height: 8,
-      tint: [1.0, 0.96, 0.709],
-    };
-    const fire: Light = {
-      shadowMap: twgl.createFramebufferInfo(gl, attachments),
-      lightMap: textures.fire,
-      position: pixelToGlCoord(173, 252),
-      height: 5,
-      tint: [1.0, 1.0, 1.0],
-    };
-    const kitchenLight: Light = {
-      shadowMap: twgl.createFramebufferInfo(gl, attachments),
-      lightMap: textures.lamp,
-      position: pixelToGlCoord(444, 243),
-      height: 10,
-      tint: [1.0, 0.96, 0.809],
-    };
 
     const occluders: SimpleOccluder.T[] = [
       wall(298, 180, 469, 180),
@@ -154,15 +133,24 @@ namespace State {
       wall(469, 241, 469, 302),
       wall(469, 311, 469, 326),
       wall(469, 326, 448, 326),
-      windowOccluder(447, 326, 424, 326),
+      windowOccluder(448, 326, 423, 326),
       wall(423, 326, 339, 326),
-      windowOccluder(338, 326, 315, 326),
+      windowOccluder(339, 326, 314, 326),
       wall(314, 326, 298, 326),
       wall(298, 326, 298, 256),
       wall(298, 246, 298, 232),
       windowOccluder(298, 233, 298, 196),
       wall(298, 214, 298, 215),
       wall(298, 196, 298, 180),
+
+      // Bedroom 1
+      wall(298, 275, 360, 275),
+      wall(360, 275, 360, 289),
+      wall(360, 299, 360, 326),
+
+      wall(416, 326, 416, 299),
+      wall(416, 288, 416, 275),
+      wall(416, 275, 469, 275),
 
       tree(42, 249, 9),
       tree(428, 472, 12),
@@ -185,7 +173,45 @@ namespace State {
       tree(362, 54, 8),
       tree(427, 75, 13),
     ];
-    const lights = [defaultLight, fire, kitchenLight];
+    const lights = [
+      {
+        shadowMap: twgl.createFramebufferInfo(gl, attachments),
+        lightMap: textures.torch,
+        position: { x: 0, y: 0 },
+        height: 8,
+        tint: [1.0, 0.96, 0.709],
+      },
+      {
+        shadowMap: twgl.createFramebufferInfo(gl, attachments),
+        lightMap: textures.fire,
+        position: pixelToGlCoord(173, 252),
+        height: 5,
+        tint: [1.0, 1.0, 1.0],
+      },
+      {
+        shadowMap: twgl.createFramebufferInfo(gl, attachments),
+        lightMap: textures.lamp,
+        position: pixelToGlCoord(444, 243),
+        height: 10,
+        tint: [1.0, 0.96, 0.809],
+      },
+      // Bedroom 1
+      {
+        shadowMap: twgl.createFramebufferInfo(gl, attachments),
+        lightMap: textures.lamp,
+        position: pixelToGlCoord(329, 301),
+        height: 10,
+        tint: [0.8, 0.7, 0.7],
+      },
+      // Bedroom 2
+      {
+        shadowMap: twgl.createFramebufferInfo(gl, attachments),
+        lightMap: textures.lamp,
+        position: pixelToGlCoord(443, 300),
+        height: 10,
+        tint: [0.8, 0.7, 0.7],
+      },
+    ];
 
     return {
       gl,
