@@ -88,42 +88,27 @@ export namespace ShadowProgram {
       );
     }
 
-    const arrays = {
-      position: {
-        numComponents: 2,
-        data: positions.array,
-        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
-      },
-      alpha: {
-        numComponents: 1,
-        data: alpha.array,
-        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
-      },
-    };
-    const blurArrays = {
-      position: {
-        numComponents: 2,
-        data: blurPositions.array,
-        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
-      },
-      triPosition: {
-        numComponents: 2,
-        data: blurTriPositions.array,
-        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
-      },
-    };
-
     Debug.record("occlusion triangles cursor offset", positions.offset);
 
-    state.bufferInfo = twgl.createBufferInfoFromArrays(
+    twgl.setAttribInfoBufferFromArray(
       state.gl,
-      arrays,
-      state.bufferInfo
+      state.bufferInfo.attribs!.position,
+      positions.array
     );
-    state.blurProgram.bufferInfo = twgl.createBufferInfoFromArrays(
+    twgl.setAttribInfoBufferFromArray(
       state.gl,
-      blurArrays,
-      state.blurProgram.bufferInfo
+      state.bufferInfo.attribs!.alpha,
+      alpha.array
+    );
+    twgl.setAttribInfoBufferFromArray(
+      state.gl,
+      state.blurProgram.bufferInfo.attribs!.position,
+      blurPositions.array
+    );
+    twgl.setAttribInfoBufferFromArray(
+      state.gl,
+      state.blurProgram.bufferInfo.attribs!.triPosition,
+      blurTriPositions.array
     );
     state.bufferInfo.numElements = occluders.length * 6;
     state.blurProgram.bufferInfo.numElements = occluders.length * 6;
