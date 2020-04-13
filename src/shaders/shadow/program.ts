@@ -13,6 +13,10 @@ export namespace ShadowProgram {
     programInfo: twgl.ProgramInfo;
     bufferInfo: twgl.BufferInfo;
     blurProgram: ShadowBlurProgram.T;
+    arrays: {
+      position: Float32Array;
+      alpha: Float32Array;
+    };
   };
 
   export function init(gl: WebGLRenderingContext): T {
@@ -27,11 +31,6 @@ export namespace ShadowProgram {
         data: new Float32Array(0),
         drawType: WebGLRenderingContext.DYNAMIC_DRAW,
       },
-      angularRange: {
-        numComponents: 2,
-        data: new Float32Array(0),
-        drawType: WebGLRenderingContext.DYNAMIC_DRAW,
-      },
     };
 
     return {
@@ -39,6 +38,10 @@ export namespace ShadowProgram {
       blurProgram: ShadowBlurProgram.init(gl),
       programInfo: twgl.createProgramInfo(gl, [vertShader, fragShader]),
       bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays),
+      arrays: {
+        position: arrays.position.data,
+        alpha: arrays.alpha.data,
+      },
     };
   }
 
@@ -48,16 +51,28 @@ export namespace ShadowProgram {
     lightHeight: number,
     occluders: SimpleOccluder.T[]
   ) {
-    const positions = new Float32Cursor(
-      new Float32Array(occluders.length * 12)
-    );
-    const alpha = new Float32Cursor(new Float32Array(occluders.length * 6));
+    const elements = occluders.length * 6;
+    if (state.arrays.position.length < elements * 2) {
+      state.arrays.position = new Float32Array(elements * 2);
+      console.log("resizing position to", elements * 2);
+    }
+    if (state.arrays.alpha.length < elements) {
+      state.arrays.alpha = new Float32Array(elements);
+    }
 
-    const blurPositions = new Float32Cursor(
-      new Float32Array(occluders.length * 12)
-    );
+    const positions = new Float32Cursor(state.arrays.position);
+    const alpha = new Float32Cursor(state.arrays.alpha);
+
+    if (state.blurProgram.arrays.position.length < elements * 2) {
+      state.blurProgram.arrays.position = new Float32Array(elements * 2);
+    }
+    if (state.blurProgram.arrays.triPosition.length < elements * 2) {
+      state.blurProgram.arrays.triPosition = new Float32Array(elements * 2);
+    }
+
+    const blurPositions = new Float32Cursor(state.blurProgram.arrays.position);
     const blurTriPositions = new Float32Cursor(
-      new Float32Array(occluders.length * 12)
+      state.blurProgram.arrays.triPosition
     );
 
     for (const occluder of occluders) {

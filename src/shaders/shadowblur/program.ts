@@ -8,6 +8,10 @@ export namespace ShadowBlurProgram {
     gl: WebGLRenderingContext;
     programInfo: twgl.ProgramInfo;
     bufferInfo: twgl.BufferInfo;
+    arrays: {
+      position: Float32Array;
+      triPosition: Float32Array;
+    };
   };
 
   export function init(gl: WebGLRenderingContext): T {
@@ -28,6 +32,10 @@ export namespace ShadowBlurProgram {
       gl,
       programInfo: twgl.createProgramInfo(gl, [vertShader, fragShader]),
       bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays),
+      arrays: {
+        position: arrays.position.data,
+        triPosition: arrays.triPosition.data,
+      },
     };
   }
 
